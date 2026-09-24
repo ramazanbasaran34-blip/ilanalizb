@@ -2948,7 +2948,7 @@ window.__GH_AFTER = function(){
   /* kayıt kartı → yalnızca çıktı */
   var sc=$('#saveCard');
   var saveRow=$('#saveName') && $('#saveName').closest('.ctrls'); if(saveRow) saveRow.classList.add('gh-hide');
-  ['#bakHint','#saveHint','#dirtyPill','#saveInfo','#bUndo','#qSave','#bHtml','#bJson'].forEach(function(s){
+  ['#bakHint','#saveHint','#dirtyPill','#saveInfo','#bUndo','#qSave','#bHtml'].forEach(function(s){
     var e=$(s); if(e) e.classList.add('gh-hide');
   });
   var h2=sc && sc.querySelector('.hd h2'); if(h2) h2.textContent='Çıktı Al';
