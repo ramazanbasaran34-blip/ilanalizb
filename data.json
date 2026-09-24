@@ -1,0 +1,22 @@
+{
+ "_app": "kuralkan-harita",
+ "_v": 4,
+ "name": "",
+ "savedAt": null,
+ "snap": {
+  "title": "Motosiklet Bölge Satış Analizi",
+  "mapName": "",
+  "sel": {},
+  "colors": {},
+  "pcolors": {},
+  "bayi": {},
+  "servis": {},
+  "region": {},
+  "plas": {},
+  "f": {
+   "il": null,
+   "bolge": null,
+   "plas": null
+  }
+ }
+}
