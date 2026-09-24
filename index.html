@@ -2992,7 +2992,12 @@ window.__GH_AFTER = function(){
   /* varsayılan sekme: genel harita */
   if(ST.tab==='veri'){ ST.tab='genel'; applyTab(); }
   applyTab();
+  var empty = !Object.keys(ST.sel||{}).length && !Object.keys(ST.plas||{}).length && !Object.keys(ST.colors||{}).length;
   if(window.__GH_ERR) toast('Veri dosyası okunamadı — sayfayı yenileyin');
+  else if(empty){
+    var w=bar.querySelector('.gh-when'); if(w) w.textContent='Henüz veri yayınlanmadı';
+    toast('Henüz veri yayınlanmadı — düzenleyen kişinin “Yayınla” demesi gerekiyor');
+  }
   else toast('Görüntüleme modu');
 };
 </script>
