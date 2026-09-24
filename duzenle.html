@@ -3031,6 +3031,8 @@ window.__GH_AFTER = function(){
     var c=G.getCfg();
     if(!c.token || !c.owner || !c.repo){ openCfg('Önce erişim anahtarını girin.'); return; }
     var snap=snapshot();
+    if(!selArr().length && !Object.keys(ST.plas).length &&
+       !(await ask('Hiç il seçili değil — görüntüleme linkinde harita boş görünecek. Yine de yayınlansın mı?','Boş yayınla',true))) return;
     if(JSON.stringify(snap)===pubSnapJSON() && !(await ask('Yayındaki sürümle aynı. Yine de yeniden yayınlansın mı?','Yayınla'))) return;
     busy=true; var btn=$('#ghPubBtn'); btn.disabled=true; btn.textContent='Yayınlanıyor…';
     try{
