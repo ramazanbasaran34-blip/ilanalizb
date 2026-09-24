@@ -95,7 +95,10 @@ body.view-only #svgMap path[data-il]{cursor:default}
 .gh-grid input{font:inherit;font-weight:400;padding:7px 9px;border:1px solid var(--hair,#ccd);border-radius:8px;background:var(--surface2,#fff);color:inherit}
 .gh-act{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
 @media (max-width:560px){.gh-grid{grid-template-columns:1fr}}
-@media print{.gh-modal{display:none!important}}
+@media print{.gh-modal,#ghFiltCard{display:none!important}}
+.gh-fbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.gh-chips{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.gh-chips:empty{display:none}
 </style>
 </head>
 <body>
@@ -1004,9 +1007,10 @@ function inFilter(p){
   if(f.il    && !f.il.includes(p.il)) return false;
   if(f.bolge && !f.bolge.includes(regOf(p)||'—')) return false;
   if(f.plas  && !f.plas.includes(plasOf(p)||'—')) return false;
+  if(f.renk  && !f.renk.includes(colorNameOf(p))) return false;
   return true;
 }
-function filterActive(){ return !!(ST.f.il||ST.f.bolge||ST.f.plas); }
+function filterActive(){ return !!(ST.f.il||ST.f.bolge||ST.f.plas||ST.f.renk); }
 function isSel(il){ return !!ST.sel[il]; }
 function selArr(){ return P.filter(p=>ST.sel[p.il]); }
 /** Harita ve özetlerin kullandığı küme: seçili iller, süzme açıksa süzülmüş hâli */
@@ -1426,7 +1430,8 @@ function refreshPlasOptions(){ renderFiltChips(); }
 /* ---------- Excel tarzı çoklu süzme ---------- */
 const FKEY={il:{lbl:'İl',   vals:()=>P.map(p=>p.il)},
             bolge:{lbl:'Bölge', vals:()=>P.map(p=>regOf(p)||'—')},
-            plas:{lbl:'Plasiyer', vals:()=>P.map(p=>plasOf(p)||'—')}};
+            plas:{lbl:'Plasiyer', vals:()=>P.map(p=>plasOf(p)||'—')},
+            renk:{lbl:'Renk', vals:()=>selArr().map(p=>colorNameOf(p))}};
 function uniqSorted(arr){
   return Array.from(new Set(arr)).sort((a,b)=>
     a==='—'?1:b==='—'?-1:a.localeCompare(b,'tr'));
@@ -1903,7 +1908,9 @@ function renderSummary(){
    ============================================================ */
 function groupSet(){
   const e=document.getElementById('xAllColor');
-  return (e && e.checked) ? P.slice() : selShown();
+  const base=(e && e.checked) ? P.slice() : selArr();
+  const only=$('#oOnlyFiltered') ? $('#oOnlyFiltered').checked : true;
+  return (only && filterActive()) ? base.filter(inFilter) : base;
 }
 function groupBy(keyFn){
   const m=new Map();
@@ -3000,6 +3007,76 @@ window.__GH_AFTER = function(){
   }
   else toast('Görüntüleme modu');
 };
+
+/* ==============================================================
+   ORTAK SÜZME ŞERİDİ — Genel Harita, Plasiyer Haritaları, Tüm
+   Haritalar ve Özet Veriler sekmelerinde İl / Bölge / Plasiyer /
+   Renk süzmesi. Haritalar, özet tabloları ve toplamlar birlikte
+   yeniden hesaplanır.
+   ============================================================== */
+(function(){
+  var _after = window.__GH_AFTER;
+  window.__GH_AFTER = function(){
+    if(_after) _after();
+    var card=document.createElement('section');
+    card.className='card'; card.id='ghFiltCard';
+    card.setAttribute('data-tabs','genel plas tum ozet');
+    card.innerHTML =
+      '<div class="hd"><h2>Süz</h2><span class="sp"></span><span class="hint" id="ghFiltInfo"></span></div>'
+     +'<div class="bd"><div class="gh-fbar">'
+     +'<button class="btn sm fbtn" type="button" data-ghf="il">İl ▾</button>'
+     +'<button class="btn sm fbtn" type="button" data-ghf="bolge">Bölge ▾</button>'
+     +'<button class="btn sm fbtn" type="button" data-ghf="plas">Plasiyer ▾</button>'
+     +'<button class="btn sm fbtn" type="button" data-ghf="renk">Renk ▾</button>'
+     +'<button class="btn sm" type="button" id="ghFClear">Süzmeyi temizle</button>'
+     +'</div><div class="gh-chips" id="ghChips"></div></div>';
+    var mc=document.getElementById('mapCard'); mc.parentNode.insertBefore(card, mc);
+
+    card.querySelectorAll('[data-ghf]').forEach(function(b){
+      b.onclick=function(){ openFilterPop(b.getAttribute('data-ghf'), b); };
+    });
+    function clearAll(){
+      ST.f={il:null,bolge:null,plas:null,renk:null};
+      renderHead(); renderBody(); renderMap(); renderSummary(); renderFiltChips(); touch();
+    }
+    document.getElementById('ghFClear').onclick=clearAll;
+
+    var LBL={il:'İl',bolge:'Bölge',plas:'Plasiyer',renk:'Renk'};
+    function chipsHTML(){
+      return ['il','bolge','plas','renk'].filter(function(k){ return ST.f[k]; }).map(function(k){
+        var f=ST.f[k];
+        return '<span class="fchip">'+LBL[k]+': <b>'+(f.length>3 ? f.length+' seçim'
+          : f.map(function(v){ return esc(v==='—'?'(boş)':v); }).join(', '))
+          +'</b> <button type="button" data-ghclr="'+k+'" title="Kaldır">×</button></span>';
+      }).join(' ');
+    }
+    function wireChips(root){
+      root.querySelectorAll('[data-ghclr]').forEach(function(b){
+        b.onclick=function(){ ST.f[b.getAttribute('data-ghclr')]=null;
+          renderHead(); renderBody(); renderMap(); renderSummary(); renderFiltChips(); touch(); };
+      });
+    }
+    var _chips = renderFiltChips;
+    renderFiltChips = function(){
+      _chips.apply(this, arguments);
+      /* il listesindeki şeride renk süzmesini de ekle */
+      var el=document.getElementById('filtChips');
+      if(el && ST.f.renk){
+        el.insertAdjacentHTML('beforeend',' <span class="fchip">Renk: <b>'
+          +(ST.f.renk.length>3?ST.f.renk.length+' seçim':ST.f.renk.map(esc).join(', '))
+          +'</b> <button type="button" data-ghclr="renk" title="Kaldır">×</button></span>');
+        wireChips(el);
+      }
+      var box=document.getElementById('ghChips'); box.innerHTML=chipsHTML(); wireChips(box);
+      card.querySelectorAll('[data-ghf]').forEach(function(b){ b.classList.toggle('on', !!ST.f[b.getAttribute('data-ghf')]); });
+      var n=selShown().length, t=selArr().length;
+      document.getElementById('ghFiltInfo').textContent = filterActive() ? n+' / '+t+' il gösteriliyor (süzülmüş)' : t+' il gösteriliyor';
+    };
+    /* görüntülemede süzme her zaman haritaya ve özetlere uygulansın */
+    if(window.__GH_MODE==='view'){ var of=document.getElementById('oOnlyFiltered'); if(of) of.checked=true; }
+    applyTab(); renderSummary(); renderFiltChips();
+  };
+})();
 </script>
 </body>
 </html>
