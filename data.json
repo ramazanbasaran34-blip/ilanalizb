@@ -1,8 +1,8 @@
 {
  "_app": "kuralkan-harita",
  "_v": 4,
- "name": "",
- "savedAt": null,
+ "name": "Motosiklet Bölge Satış Analizi",
+ "savedAt": "2026-09-24T12:25:31.162Z",
  "snap": {
   "title": "Motosiklet Bölge Satış Analizi",
   "mapName": "",
@@ -17,6 +17,33 @@
    "il": null,
    "bolge": null,
    "plas": null
+  },
+  "rule": "genel20",
+  "mark": "26",
+  "font": "11",
+  "view": {
+   "oName": true,
+   "oRank": true,
+   "oRankBC": true,
+   "oPay": false,
+   "oAdet": false,
+   "oBajajPay": false,
+   "oAllNames": false,
+   "oBayiV": true,
+   "oBayiY": true,
+   "oServisV": false,
+   "oServisY": false,
+   "oOnlyFiltered": true,
+   "xLogo": true,
+   "xTitle": true,
+   "xSub": true,
+   "xLegend": true,
+   "xSource": true,
+   "xOff": true,
+   "xBorder": true,
+   "xAllColor": false,
+   "xSummary": true,
+   "pPlas": false
   }
  }
 }
