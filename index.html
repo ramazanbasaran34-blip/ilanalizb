@@ -1276,9 +1276,11 @@ const COLS = [
   {k:'genel',    t:'Genel\nSatış\nAdedi',             sort:'genel'},
   {k:'bcTop',    t:'Bajaj+CFMoto\nSatış\nAdedi',      sort:'bcTop'},
   {k:'bajaj',    t:'Bajaj\nSatış\nAdedi',             sort:'bajaj'},
+  {k:'cf',       t:'CFMoto\nSatış\nAdedi',            sort:'cf'},
   {k:'genelPay', t:'Genel\nPazar\nPayı',              sort:'genelPay'},
   {k:'bcPay',    t:'Bajaj+CFMoto\nPazar\nPayı',       sort:'bcPay'},
   {k:'bajajIc',  t:'Bajaj\nPazar\nPayı',              sort:'bajajIc'},
+  {k:'cfIc',     t:'CFMoto\nPazar\nPayı',             sort:'cfIc'},
   {k:'durum',    t:'Durum',      sort:'durum', l:1},
   {k:'plas',     t:'Plasiyer',   sort:'_plas', l:1},
   {k:'bolge',    t:'Bölge',      sort:'_reg', l:1},
@@ -1363,8 +1365,8 @@ function renderBody(){
       + '<td class="l" style="color:var(--faint)">'+(i+1)+'</td>'
       + '<td class="l"><span class="ilname"><span class="dot '+(bV(p)?'y':'n')+'" title="'+(bV(p)?'Bajaj bayisi VAR':'Bajaj bayisi YOK')+'"></span>'+esc(p.il)+'</span></td>'
       + '<td'+mu+'>'+p.r_genel+'.</td><td'+mu+'>'+p.r_bcTop+'.</td><td'+mu+'>'+p.r_bajaj+'.</td>'
-      + '<td>'+N(p.genel)+'</td><td>'+N(p.bcTop)+'</td><td>'+N(p.bajaj)+'</td>'
-      + '<td><b>'+PC(p.genelPay,3)+'</b></td><td><b>'+PC(p.bcPay,3)+'</b></td><td><b>'+PC(p.bajajIc)+'</b></td>'
+      + '<td>'+N(p.genel)+'</td><td>'+N(p.bcTop)+'</td><td>'+N(p.bajaj)+'</td><td>'+N(p.cf)+'</td>'
+      + '<td><b>'+PC(p.genelPay,3)+'</b></td><td><b>'+PC(p.bcPay,3)+'</b></td><td><b>'+PC(p.bajajIc)+'</b></td><td><b>'+PC(p.cfIc)+'</b></td>'
       + '<td class="l"><span class="tag '+(p.durum==='Bajaj önde'?'b':(p.durum==='CFMoto önde'?'c':'z'))+'">'+esc(p.durum)+'</span></td>'
       + '<td class="l"><input type="text" class="mini wide" data-plas="'+esc(p.il)+'" value="'+esc(ST.plas[p.il]||'')+'" placeholder="—"></td>'
       + '<td class="l"><input type="text" class="mini wide" data-reg="'+esc(p.il)+'" value="'+esc(reg)+'" placeholder="—"></td>'
@@ -1882,10 +1884,10 @@ function applyZoom(){
    Bayi Sayısı · Servis Sayısı
    ============================================================ */
 const IL_TH=[['İl'],['Genel','Satış','Sıralaması'],['Bajaj+CFMoto','Satış','Sıralaması'],['Bajaj','Satış','Sıralaması'],
-  ['Genel','Satış','Adedi'],['Bajaj+CFMoto','Satış','Adedi'],['Bajaj','Satış','Adedi'],
-  ['Genel','Pazar','Payı'],['Bajaj+CFMoto','Pazar','Payı'],['Bajaj','Pazar','Payı'],
+  ['Genel','Satış','Adedi'],['Bajaj+CFMoto','Satış','Adedi'],['Bajaj','Satış','Adedi'],['CFMoto','Satış','Adedi'],
+  ['Genel','Pazar','Payı'],['Bajaj+CFMoto','Pazar','Payı'],['Bajaj','Pazar','Payı'],['CFMoto','Pazar','Payı'],
   ['Durum'],['Plasiyer'],['Bölge'],['Bayi','Sayısı'],['Servis','Sayısı']];
-const IL_TH_L=[1,0,0,0,0,0,0,0,0,0,1,1,1,0,0];
+const IL_TH_L=[1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0];
 const IL_NC=IL_TH.length;
 function ilHeadHTML(){
   return '<tr>'+IL_TH.map((a,i)=>'<th class="'+(IL_TH_L[i]?'l':'c')+'">'+a.map(esc).join('<br>')+'</th>').join('')+'</tr>';
@@ -1899,8 +1901,8 @@ function ilRowHTML(p,sw,report){
     +'<td class="l">'+(report ? esc(p.il)
         : '<span class="ilname">'+(sw?'<span class="csw" style="background:'+sw+'"></span>':'')+esc(p.il)+'</span>')+'</td>'
     +C(p.r_genel+'.',mu)+C(p.r_bcTop+'.',mu)+C(p.r_bajaj+'.',mu)
-    +C(N(p.genel))+C(N(p.bcTop))+C(N(p.bajaj))
-    +C('<b>'+PC(p.genelPay,3)+'</b>')+C('<b>'+PC(p.bcPay,3)+'</b>')+C('<b>'+PC(p.bajajIc)+'</b>')
+    +C(N(p.genel))+C(N(p.bcTop))+C(N(p.bajaj))+C(N(p.cf))
+    +C('<b>'+PC(p.genelPay,3)+'</b>')+C('<b>'+PC(p.bcPay,3)+'</b>')+C('<b>'+PC(p.bajajIc)+'</b>')+C('<b>'+PC(p.cfIc)+'</b>')
     +'<td class="l">'+(report?esc(p.durum):'<span class="tag '+durumCls(p.durum)+'">'+esc(p.durum)+'</span>')+'</td>'
     +'<td class="l">'+esc(plasOf(p)||'—')+'</td>'
     +'<td class="l">'+esc(regOf(p)||'—')+'</td>'
@@ -1911,8 +1913,8 @@ function ilTotHTML(list,label,cls){
   const d = !t.bc ? 'Satış yok' : (t.bj>t.cf ? 'Bajaj önde' : (t.bj===t.cf ? 'Eşit' : 'CFMoto önde'));
   const C=v=>'<td class="c">'+v+'</td>';
   return '<tr'+(cls?' class="'+cls+'"':'')+'><td class="l">'+esc(label)+'</td>'+C('')+C('')+C('')
-    +C(N(t.genel))+C(N(t.bc))+C(N(t.bj))
-    +C(PC(t.gp,2))+C(PC(t.bp,2))+C(t.icB!=null?PC(t.icB):'—')
+    +C(N(t.genel))+C(N(t.bc))+C(N(t.bj))+C(N(t.cf))
+    +C(PC(t.gp,2))+C(PC(t.bp,2))+C(t.icB!=null?PC(t.icB):'—')+C(t.icC!=null?PC(t.icC):'—')
     +'<td class="l">'+esc(d)+'</td><td class="l"></td><td class="l"></td>'
     +C(t.bayi)+C(t.serv)+'</tr>';
 }
@@ -1921,7 +1923,7 @@ function ilNoteHTML(report){
     +'<b>Genel Satış Sıralaması</b>, <b>Bajaj+CFMoto Satış Sıralaması</b> ve <b>Bajaj Satış Sıralaması</b> sütunları, ilin 81 il içindeki Türkiye sırasını gösterir.<br>'
     +'<b>Genel Pazar Payı</b> = ilin tüm marka satışı / Türkiye toplamı ('+N(TOT.genel)+') &nbsp;·&nbsp; '
     +'<b>Bajaj+CFMoto Pazar Payı</b> = ilin Bajaj+CFMoto satışı / Türkiye Bajaj+CFMoto toplamı ('+N(TOT.bc)+') &nbsp;·&nbsp; '
-    +'<b>Bajaj Pazar Payı</b> = ildeki Bajaj+CFMoto satışı içinde Bajaj\'ın payı &nbsp;·&nbsp; '
+    +'<b>Bajaj Pazar Payı</b> / <b>CFMoto Pazar Payı</b> = ildeki Bajaj+CFMoto satışı içinde markanın payı (ikisinin toplamı %100) &nbsp;·&nbsp; '
     +'<b>Durum</b> = ilde Bajaj ile CFMoto\'dan hangisinin daha çok sattığı &nbsp;·&nbsp; '
     +'<b>Toplam</b> satırındaki pay oranları, seçilen illerin toplamı üzerinden hesaplanır.</p>';
 }
@@ -2058,7 +2060,7 @@ function groupBy(keyFn){
     return {key, n:list.length, genel, bc, bajaj, cf,
             bayi:list.reduce((a,p)=>a+bS(p),0), serv:list.reduce((a,p)=>a+sS(p),0),
             gp:genel/TOT.genel, bp:bc/TOT.bc, jp:bajaj/TOT.bajaj, cp:cf/TOT.cf,
-            ic: bc ? bajaj/bc : null,
+            ic: bc ? bajaj/bc : null, icc: bc ? cf/bc : null,
             durum: !bc ? 'Satış yok' : (bajaj>cf ? 'Bajaj önde' : (bajaj===cf ? 'Eşit' : 'CFMoto önde'))};
   });
 }
@@ -2075,19 +2077,20 @@ function bolgeGroups(){
     .map(g=>Object.assign(g,{name: g.key==='\u0000' ? 'Bölge atanmamış' : g.key, hex:null}));
 }
 /* il tablolarıyla aynı sıra: adetler yan yana, sonra pazar payları, sonra durum ve bayi/servis */
-const GRP_HEAD=['Grup','İl Sayısı','Genel Satış Adedi','Bajaj+CFMoto Satış Adedi','Bajaj Satış Adedi',
-                'Genel Pazar Payı','Bajaj+CFMoto Pazar Payı','Bajaj Pazar Payı','Durum','Bayi Sayısı','Servis Sayısı'];
-const GRP_TH=[['Grup'],['İl','Sayısı'],['Genel','Satış','Adedi'],['Bajaj+CFMoto','Satış','Adedi'],['Bajaj','Satış','Adedi'],
-              ['Genel','Pazar','Payı'],['Bajaj+CFMoto','Pazar','Payı'],['Bajaj','Pazar','Payı'],['Durum'],['Bayi','Sayısı'],['Servis','Sayısı']];
-const GRP_TYPE=['s','n','n','n','n','p','p','p','s','n','n'];
-const GRP_WID =[24,9,12,15,11,11,15,11,13,9,9];
-const GRP_BOLD=[5,6,7];
-function grpRow(g){ return [g.name,g.n,g.genel,g.bc,g.bajaj,g.gp,g.bp,g.ic==null?'':g.ic,g.durum,g.bayi,g.serv]; }
+const GRP_HEAD=['Grup','İl Sayısı','Genel Satış Adedi','Bajaj+CFMoto Satış Adedi','Bajaj Satış Adedi','CFMoto Satış Adedi',
+                'Genel Pazar Payı','Bajaj+CFMoto Pazar Payı','Bajaj Pazar Payı','CFMoto Pazar Payı','Durum','Bayi Sayısı','Servis Sayısı'];
+const GRP_TH=[['Grup'],['İl','Sayısı'],['Genel','Satış','Adedi'],['Bajaj+CFMoto','Satış','Adedi'],['Bajaj','Satış','Adedi'],['CFMoto','Satış','Adedi'],
+              ['Genel','Pazar','Payı'],['Bajaj+CFMoto','Pazar','Payı'],['Bajaj','Pazar','Payı'],['CFMoto','Pazar','Payı'],['Durum'],['Bayi','Sayısı'],['Servis','Sayısı']];
+const GRP_TYPE=['s','n','n','n','n','n','p','p','p','p','s','n','n'];
+const GRP_WID =[24,9,12,15,11,11,11,15,11,11,13,9,9];
+const GRP_BOLD=[6,7,8,9];
+const GRP_DUR=10;
+function grpRow(g){ return [g.name,g.n,g.genel,g.bc,g.bajaj,g.cf,g.gp,g.bp,g.ic==null?'':g.ic,g.icc==null?'':g.icc,g.durum,g.bayi,g.serv]; }
 function grpTot(groups){
   const S=f=>groups.reduce((a,g)=>a+g[f],0);
   const genel=S('genel'), bc=S('bc'), bajaj=S('bajaj'), cf=S('cf');
   const d = !bc ? 'Satış yok' : (bajaj>cf ? 'Bajaj önde' : (bajaj===cf ? 'Eşit' : 'CFMoto önde'));
-  return ['TOPLAM', S('n'), genel, bc, bajaj, genel/TOT.genel, bc/TOT.bc, bc?bajaj/bc:'', d, S('bayi'), S('serv')];
+  return ['TOPLAM', S('n'), genel, bc, bajaj, cf, genel/TOT.genel, bc/TOT.bc, bc?bajaj/bc:'', bc?cf/bc:'', d, S('bayi'), S('serv')];
 }
 function grpSentence(g,kind){
   return (kind==='renk' ? g.name+' renkli '+g.n+' il' : g.name+' — '+g.n+' il')
@@ -2101,10 +2104,10 @@ function grpTableHTML(groups,kind,report){
   const head='<tr>'+GRP_TH.map((h,i)=>'<th class="'+(GRP_TYPE[i]==='s'?'l':'c')+'">'+h.map(esc).join('<br>')+'</th>').join('')+'</tr>';
   const body=groups.map(g=>'<tr>'+grpRow(g).map((v,i)=>{
       if(i===0) return '<td class="l">'+(g.hex?'<span class="csw" style="background:'+g.hex+'"></span>':'')+'<b>'+esc(v)+'</b></td>';
-      if(i===8) return '<td class="l">'+dur(v)+'</td>';
+      if(i===GRP_DUR) return '<td class="l">'+dur(v)+'</td>';
       return '<td class="c">'+(GRP_BOLD.indexOf(i)>=0?'<b>'+cell(v,GRP_TYPE[i])+'</b>':cell(v,GRP_TYPE[i]))+'</td>';
     }).join('')+'</tr>').join('');
-  const tot='<tr'+(report?' class="tot"':'')+'>'+grpTot(groups).map((v,i)=>'<td class="'+(i===0||i===8?'l':'c')+'">'+cell(v,GRP_TYPE[i])+'</td>').join('')+'</tr>';
+  const tot='<tr'+(report?' class="tot"':'')+'>'+grpTot(groups).map((v,i)=>'<td class="'+(i===0||i===GRP_DUR?'l':'c')+'">'+cell(v,GRP_TYPE[i])+'</td>').join('')+'</tr>';
   const tbl = report
     ? '<div class="wrapt"><table><thead>'+head+'</thead><tbody>'+body+'</tbody><tfoot>'+tot+'</tfoot></table></div>'
     : '<div class="sumwrap" style="max-height:none"><table class="sum" data-tkey="grp-'+esc(kind)+'" data-def="'
@@ -2124,7 +2127,7 @@ function grpBlocks(report){
     + '<p class="hint sortnote"><b>Sıralama:</b> Varsayılan olarak renk grupları renk sırasına göre; plasiyer ve bölge grupları genel satış adedine (tüm markalar) göre büyükten küçüğe sıralıdır.'+(report?'':' Sütun başlıklarına tıklayarak yeniden sıralayabilirsiniz.')+'<br>'
     + '<b>Genel Pazar Payı</b> = grubun tüm marka satışı / Türkiye toplamı ('+N(TOT.genel)+') &nbsp;·&nbsp; '
     + '<b>Bajaj+CFMoto Pazar Payı</b> = grubun Bajaj+CFMoto satışı / Türkiye Bajaj+CFMoto toplamı ('+N(TOT.bc)+') &nbsp;·&nbsp; '
-    + '<b>Bajaj Pazar Payı</b> = grubun Bajaj+CFMoto satışı içinde Bajaj\'ın payı (il tablolarıyla aynı) &nbsp;·&nbsp; '
+    + '<b>Bajaj Pazar Payı</b> / <b>CFMoto Pazar Payı</b> = grubun Bajaj+CFMoto satışı içinde markanın payı (ikisinin toplamı %100, il tablolarıyla aynı) &nbsp;·&nbsp; '
     + '<b>Durum</b> = grupta Bajaj ile CFMoto\'dan hangisinin daha çok sattığı. '
     + 'Grubun Türkiye Bajaj satışı içindeki payı, tablonun altındaki cümlelerde yazar.</p>';
 }
