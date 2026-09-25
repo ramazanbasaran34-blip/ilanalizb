@@ -222,6 +222,7 @@ td.selcell{text-align:center}
 td.selcell input{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}
 .mini{width:82px;font-size:.75rem;padding:3px 5px;min-height:24px}
 .mini.w{width:96px}
+.mini.wide{width:124px;font-size:.66rem;padding:3px 4px;letter-spacing:-.01em}
 .mini.c{width:132px}
 .csw{display:inline-block;width:13px;height:13px;border-radius:4px;flex:none;vertical-align:-2px;
   margin-right:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
@@ -1269,25 +1270,22 @@ const COLS = [
   {k:'sel',      t:'Seç',        sort:'_sel', cls:'selcell'},
   {k:'no',       t:'#',          sort:null, l:1},
   {k:'il',       t:'İl',         sort:'il', l:1},
-  {k:'renk',     t:'Renk\n(Genel Harita)', sort:'_color', l:1},
-  {k:'prenk',    t:'Renk\n(Plasiyer Haritası)', sort:'_pcolor', l:1},
-  {k:'bolge',    t:'Bölge',      sort:'_reg', l:1},
+  {k:'r_genel',  t:'Genel\nSatış\nSıralaması',        sort:'r_genel'},
+  {k:'r_bcTop',  t:'Bajaj+CFMoto\nSatış\nSıralaması', sort:'r_bcTop'},
+  {k:'r_bajaj',  t:'Bajaj\nSatış\nSıralaması',        sort:'r_bajaj'},
+  {k:'genel',    t:'Genel\nSatış\nAdedi',             sort:'genel'},
+  {k:'bcTop',    t:'Bajaj+CFMoto\nSatış\nAdedi',      sort:'bcTop'},
+  {k:'bajaj',    t:'Bajaj\nSatış\nAdedi',             sort:'bajaj'},
+  {k:'genelPay', t:'Genel\nPazar\nPayı',              sort:'genelPay'},
+  {k:'bcPay',    t:'Bajaj+CFMoto\nPazar\nPayı',       sort:'bcPay'},
+  {k:'bajajIc',  t:'Bajaj\nPazar\nPayı',              sort:'bajajIc'},
+  {k:'durum',    t:'Durum',      sort:'durum', l:1},
   {k:'plas',     t:'Plasiyer',   sort:'_plas', l:1},
-  {k:'bayiVar',  t:'Bayi\nVar mı',     sort:'bayiVar'},
-  {k:'bayiSayi', t:'Bayi\nSayısı',  sort:'bayiSayi'},
-  {k:'servisVar',t:'Servis\nVar mı',   sort:'servisVar'},
+  {k:'bolge',    t:'Bölge',      sort:'_reg', l:1},
+  {k:'bayiSayi', t:'Bayi\nSayısı',   sort:'bayiSayi'},
   {k:'servisSayi',t:'Servis\nSayısı',sort:'servisSayi'},
-  {k:'genel',    t:'Genel\nSatış Adedi',sort:'genel'},
-  {k:'genelPay', t:'Genel\nPazar Payı',sort:'genelPay'},
-  {k:'r_genel',  t:'Genel Satış\nSıralaması',sort:'r_genel'},
-  {k:'bcTop',    t:'Bajaj+CFMoto\nSatış Adedi', sort:'bcTop'},
-  {k:'bcPay',    t:'Bajaj+CFMoto\nPazar Payı', sort:'bcPay'},
-  {k:'r_bcTop',  t:'Bajaj+CFMoto\nSatış Sıralaması', sort:'r_bcTop'},
-  {k:'bajaj',    t:'Bajaj\nSatış Adedi', sort:'bajaj'},
-  {k:'cf',       t:'CFMoto\nSatış Adedi', sort:'cf'},
-  {k:'bajajIc',  t:'Bajaj\nPazar Payı', sort:'bajajIc'},
-  {k:'cfIc',     t:'CFMoto\nPazar Payı',sort:'cfIc'},
-  {k:'durum',    t:'Durum',      sort:'durum', l:1}
+  {k:'renk',     t:'Renk\n(Genel Harita)', sort:'_color', l:1},
+  {k:'prenk',    t:'Renk\n(Plasiyer Haritası)', sort:'_pcolor', l:1}
 ];
 function sortVal(p,key){
   if(key==='_reg')   return regOf(p).toLocaleLowerCase('tr');
@@ -1337,7 +1335,7 @@ function renderHead(){
   $$('#thead th[data-sort]').forEach(th=>th.onclick=()=>{
     const k=th.dataset.sort;
     if(ST.sortKey===k) ST.sortDir=-ST.sortDir;
-    else { ST.sortKey=k; ST.sortDir=(k==='il'||k==='durum'||k==='_plas')?1:-1; }
+    else { ST.sortKey=k; ST.sortDir=(k==='il'||k==='durum'||k==='_plas'||k==='_reg'||k.indexOf('r_')===0)?1:-1; }
     const dd=['genel','bcTop','bajaj','cf','bajajIc','bayiSayi','servisSayi','il','_color'];
     $('#fSort').value = dd.indexOf(k)>=0 ? k : 'genel';
     renderHead(); renderBody();
@@ -1359,22 +1357,21 @@ function renderBody(){
   const rows=filtered();
   $('#tbody').innerHTML = rows.map((p,i)=>{
     const reg=regOf(p);
+    const mu=' style="color:var(--muted)"';
     return '<tr class="'+(isSel(p.il)?'on':'')+'" data-il="'+esc(p.il)+'">'
       + '<td class="selcell"><input type="checkbox" data-sel="'+esc(p.il)+'"'+(isSel(p.il)?' checked':'')+' title="Haritada göster"></td>'
       + '<td class="l" style="color:var(--faint)">'+(i+1)+'</td>'
       + '<td class="l"><span class="ilname"><span class="dot '+(bV(p)?'y':'n')+'" title="'+(bV(p)?'Bajaj bayisi VAR':'Bajaj bayisi YOK')+'"></span>'+esc(p.il)+'</span></td>'
+      + '<td'+mu+'>'+p.r_genel+'.</td><td'+mu+'>'+p.r_bcTop+'.</td><td'+mu+'>'+p.r_bajaj+'.</td>'
+      + '<td>'+N(p.genel)+'</td><td>'+N(p.bcTop)+'</td><td>'+N(p.bajaj)+'</td>'
+      + '<td><b>'+PC(p.genelPay,3)+'</b></td><td><b>'+PC(p.bcPay,3)+'</b></td><td><b>'+PC(p.bajajIc)+'</b></td>'
+      + '<td class="l"><span class="tag '+(p.durum==='Bajaj önde'?'b':(p.durum==='CFMoto önde'?'c':'z'))+'">'+esc(p.durum)+'</span></td>'
+      + '<td class="l"><input type="text" class="mini wide" data-plas="'+esc(p.il)+'" value="'+esc(ST.plas[p.il]||'')+'" placeholder="—"></td>'
+      + '<td class="l"><input type="text" class="mini wide" data-reg="'+esc(p.il)+'" value="'+esc(reg)+'" placeholder="—"></td>'
+      + '<td><input type="number" class="numin'+(ST.bayi[p.il]!=null?' fix':'')+'" min="0" max="99" step="1" data-bayi="'+esc(p.il)+'" value="'+bS(p)+'" title="Bajaj bayi sayısı — 0 = bayi YOK · değiştirebilirsiniz"></td>'
+      + '<td><input type="number" class="numin'+(ST.servis[p.il]!=null?' fix':'')+'" min="0" max="99" step="1" data-servis="'+esc(p.il)+'" value="'+sS(p)+'" title="Bajaj servis sayısı — 0 = servis YOK · değiştirebilirsiniz"></td>'
       + '<td class="l colcell">'+colorCellHTML(p)+'</td>'
       + '<td class="l colcell">'+pColorBtnHTML(p.il)+'</td>'
-      + '<td class="l"><input type="text" class="mini w" data-reg="'+esc(p.il)+'" value="'+esc(reg)+'" placeholder="—"></td>'
-      + '<td class="l"><input type="text" class="mini w" data-plas="'+esc(p.il)+'" value="'+esc(ST.plas[p.il]||'')+'" placeholder="—"></td>'
-      + '<td><span class="tag '+(bV(p)?'b':'c')+'">'+(bV(p)?'VAR':'YOK')+'</span></td>'
-      + '<td><input type="number" class="numin'+(ST.bayi[p.il]!=null?' fix':'')+'" min="0" max="99" step="1" data-bayi="'+esc(p.il)+'" value="'+bS(p)+'" title="Bajaj bayi sayısı — değiştirebilirsiniz"></td>'
-      + '<td><span class="tag '+(sV(p)?'b':'c')+'">'+(sV(p)?'VAR':'YOK')+'</span></td>'
-      + '<td><input type="number" class="numin'+(ST.servis[p.il]!=null?' fix':'')+'" min="0" max="99" step="1" data-servis="'+esc(p.il)+'" value="'+sS(p)+'" title="Bajaj servis sayısı — değiştirebilirsiniz"></td>'
-      + '<td>'+N(p.genel)+'</td><td><b>'+PC(p.genelPay,3)+'</b></td><td style="color:var(--muted)">'+p.r_genel+'.</td>'
-      + '<td>'+N(p.bcTop)+'</td><td><b>'+PC(p.bcPay,3)+'</b></td><td style="color:var(--muted)">'+p.r_bcTop+'.</td>'
-      + '<td>'+N(p.bajaj)+'</td><td>'+N(p.cf)+'</td><td>'+PC(p.bajajIc)+'</td><td>'+PC(p.cfIc)+'</td>'
-      + '<td class="l"><span class="tag '+(p.durum==='Bajaj önde'?'b':(p.durum==='CFMoto önde'?'c':'z'))+'">'+esc(p.durum)+'</span></td>'
       + '</tr>';
   }).join('');
   countLine();
