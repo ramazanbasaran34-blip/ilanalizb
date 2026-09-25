@@ -873,7 +873,7 @@ svg.map.mini{cursor:default}
     <div class="hd">
       <h2>Özet — Renk, Plasiyer ve Bölge Bazında Pazar Payları</h2>
       <span class="sp"></span>
-      <span class="hint">Her grubun genel pazar payı · Bajaj+CFMoto pazar payı · Bajaj Türkiye satış payı</span>
+      <span class="hint">Her grubun satış adetleri, pazar payları ve durumu</span>
     </div>
     <div class="bd" id="groupSummary"></div>
   </section>
@@ -2056,7 +2056,10 @@ function groupBy(keyFn){
     const S=f=>list.reduce((a,p)=>a+p[f],0);
     const genel=S('genel'), bc=S('bcTop'), bajaj=S('bajaj'), cf=S('cf');
     return {key, n:list.length, genel, bc, bajaj, cf,
-            gp:genel/TOT.genel, bp:bc/TOT.bc, jp:bajaj/TOT.bajaj, cp:cf/TOT.cf};
+            bayi:list.reduce((a,p)=>a+bS(p),0), serv:list.reduce((a,p)=>a+sS(p),0),
+            gp:genel/TOT.genel, bp:bc/TOT.bc, jp:bajaj/TOT.bajaj, cp:cf/TOT.cf,
+            ic: bc ? bajaj/bc : null,
+            durum: !bc ? 'Satış yok' : (bajaj>cf ? 'Bajaj önde' : (bajaj===cf ? 'Eşit' : 'CFMoto önde'))};
   });
 }
 function colorGroups(){
@@ -2071,19 +2074,20 @@ function bolgeGroups(){
   return groupBy(p=>ST.region[p.il]||'\u0000').sort((a,b)=>b.genel-a.genel)
     .map(g=>Object.assign(g,{name: g.key==='\u0000' ? 'Bölge atanmamış' : g.key, hex:null}));
 }
-const GRP_HEAD=['Grup','İl Sayısı','Genel Satış Adedi','Genel Pazar Payı','Bajaj+CFMoto Satış Adedi','Bajaj+CFMoto Pazar Payı',
-                'Bajaj Satış Adedi','Bajaj Türkiye Satış Payı','CFMoto Satış Adedi','CFMoto Türkiye Satış Payı'];
-/* ekranda iki satır: üst satır marka, alt satır ne olduğu */
-const GRP_TH=[['Grup'],['İl','Sayısı'],['Genel','Satış','Adedi'],['Genel','Pazar','Payı'],['Bajaj+CFMoto','Satış','Adedi'],
-              ['Bajaj+CFMoto','Pazar','Payı'],['Bajaj','Satış','Adedi'],['Bajaj','Türkiye','Satış Payı'],['CFMoto','Satış','Adedi'],
-              ['CFMoto','Türkiye','Satış Payı']];
-const GRP_TYPE=['s','n','n','p','n','p','n','p','n','p'];
-const GRP_WID =[24,10,14,14,16,16,14,16,14,16];
-function grpRow(g){ return [g.name,g.n,g.genel,g.gp,g.bc,g.bp,g.bajaj,g.jp,g.cf,g.cp]; }
+/* il tablolarıyla aynı sıra: adetler yan yana, sonra pazar payları, sonra durum ve bayi/servis */
+const GRP_HEAD=['Grup','İl Sayısı','Genel Satış Adedi','Bajaj+CFMoto Satış Adedi','Bajaj Satış Adedi',
+                'Genel Pazar Payı','Bajaj+CFMoto Pazar Payı','Bajaj Pazar Payı','Durum','Bayi Sayısı','Servis Sayısı'];
+const GRP_TH=[['Grup'],['İl','Sayısı'],['Genel','Satış','Adedi'],['Bajaj+CFMoto','Satış','Adedi'],['Bajaj','Satış','Adedi'],
+              ['Genel','Pazar','Payı'],['Bajaj+CFMoto','Pazar','Payı'],['Bajaj','Pazar','Payı'],['Durum'],['Bayi','Sayısı'],['Servis','Sayısı']];
+const GRP_TYPE=['s','n','n','n','n','p','p','p','s','n','n'];
+const GRP_WID =[24,9,12,15,11,11,15,11,13,9,9];
+const GRP_BOLD=[5,6,7];
+function grpRow(g){ return [g.name,g.n,g.genel,g.bc,g.bajaj,g.gp,g.bp,g.ic==null?'':g.ic,g.durum,g.bayi,g.serv]; }
 function grpTot(groups){
   const S=f=>groups.reduce((a,g)=>a+g[f],0);
   const genel=S('genel'), bc=S('bc'), bajaj=S('bajaj'), cf=S('cf');
-  return ['TOPLAM', S('n'), genel, genel/TOT.genel, bc, bc/TOT.bc, bajaj, bajaj/TOT.bajaj, cf, cf/TOT.cf];
+  const d = !bc ? 'Satış yok' : (bajaj>cf ? 'Bajaj önde' : (bajaj===cf ? 'Eşit' : 'CFMoto önde'));
+  return ['TOPLAM', S('n'), genel, bc, bajaj, genel/TOT.genel, bc/TOT.bc, bc?bajaj/bc:'', d, S('bayi'), S('serv')];
 }
 function grpSentence(g,kind){
   return (kind==='renk' ? g.name+' renkli '+g.n+' il' : g.name+' — '+g.n+' il')
@@ -2092,13 +2096,15 @@ function grpSentence(g,kind){
 }
 function grpTableHTML(groups,kind,report){
   if(!groups.length) return '<p class="hint">Gösterilecek il yok.</p>';
-  const cell=(v,t)=> t==='p'?PC(v,2):(t==='n'?N(v):esc(v));
+  const cell=(v,t)=> v===''||v==null ? '—' : (t==='p'?PC(v,2):(t==='n'?N(v):esc(v)));
+  const dur=v=> report ? esc(v) : '<span class="tag '+durumCls(v)+'">'+esc(v)+'</span>';
   const head='<tr>'+GRP_TH.map((h,i)=>'<th class="'+(GRP_TYPE[i]==='s'?'l':'c')+'">'+h.map(esc).join('<br>')+'</th>').join('')+'</tr>';
   const body=groups.map(g=>'<tr>'+grpRow(g).map((v,i)=>{
       if(i===0) return '<td class="l">'+(g.hex?'<span class="csw" style="background:'+g.hex+'"></span>':'')+'<b>'+esc(v)+'</b></td>';
-      return '<td class="c">'+(i===3||i===5||i===7?'<b>'+cell(v,GRP_TYPE[i])+'</b>':cell(v,GRP_TYPE[i]))+'</td>';
+      if(i===8) return '<td class="l">'+dur(v)+'</td>';
+      return '<td class="c">'+(GRP_BOLD.indexOf(i)>=0?'<b>'+cell(v,GRP_TYPE[i])+'</b>':cell(v,GRP_TYPE[i]))+'</td>';
     }).join('')+'</tr>').join('');
-  const tot='<tr'+(report?' class="tot"':'')+'>'+grpTot(groups).map((v,i)=>'<td class="'+(i===0?'l':'c')+'">'+cell(v,GRP_TYPE[i])+'</td>').join('')+'</tr>';
+  const tot='<tr'+(report?' class="tot"':'')+'>'+grpTot(groups).map((v,i)=>'<td class="'+(i===0||i===8?'l':'c')+'">'+cell(v,GRP_TYPE[i])+'</td>').join('')+'</tr>';
   const tbl = report
     ? '<div class="wrapt"><table><thead>'+head+'</thead><tbody>'+body+'</tbody><tfoot>'+tot+'</tfoot></table></div>'
     : '<div class="sumwrap" style="max-height:none"><table class="sum" data-tkey="grp-'+esc(kind)+'" data-def="'
@@ -2118,8 +2124,9 @@ function grpBlocks(report){
     + '<p class="hint sortnote"><b>Sıralama:</b> Varsayılan olarak renk grupları renk sırasına göre; plasiyer ve bölge grupları genel satış adedine (tüm markalar) göre büyükten küçüğe sıralıdır.'+(report?'':' Sütun başlıklarına tıklayarak yeniden sıralayabilirsiniz.')+'<br>'
     + '<b>Genel Pazar Payı</b> = grubun tüm marka satışı / Türkiye toplamı ('+N(TOT.genel)+') &nbsp;·&nbsp; '
     + '<b>Bajaj+CFMoto Pazar Payı</b> = grubun Bajaj+CFMoto satışı / Türkiye Bajaj+CFMoto toplamı ('+N(TOT.bc)+') &nbsp;·&nbsp; '
-    + '<b>Bajaj Türkiye Satış Payı</b> = grubun Bajaj satışı / Türkiye Bajaj toplamı ('+N(TOT.bajaj)+') &nbsp;·&nbsp; '
-    + '<b>CFMoto Türkiye Satış Payı</b> = grubun CFMoto satışı / Türkiye CFMoto toplamı ('+N(TOT.cf)+').</p>';
+    + '<b>Bajaj Pazar Payı</b> = grubun Bajaj+CFMoto satışı içinde Bajaj\'ın payı (il tablolarıyla aynı) &nbsp;·&nbsp; '
+    + '<b>Durum</b> = grupta Bajaj ile CFMoto\'dan hangisinin daha çok sattığı. '
+    + 'Grubun Türkiye Bajaj satışı içindeki payı, tablonun altındaki cümlelerde yazar.</p>';
 }
 function renderGroupSummary(){ $('#groupSummary').innerHTML = grpBlocks(false); applyTableSorts($('#groupSummary')); }
 function grpReportHTML(){ return grpBlocks(true); }
